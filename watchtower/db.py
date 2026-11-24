@@ -178,6 +178,14 @@ class Database:
             args = (camera_id,)
         return [FrameRow(**dict(r)) for r in self.conn.execute(sql + " ORDER BY id", args)]
 
+    def latest_frames(self) -> dict[str, FrameRow]:
+        cur = self.conn.execute(
+            "SELECT f.* FROM camera_frames f JOIN ("
+            " SELECT camera_id, MAX(captured_at_utc) AS ts FROM camera_frames GROUP BY camera_id"
+            ") m ON f.camera_id = m.camera_id AND f.captured_at_utc = m.ts ORDER BY f.id"
+        )
+        return {r["camera_id"]: FrameRow(**dict(r)) for r in cur}
+
     def prunable_frames(self, cutoff_utc: str, limit: int = 1000) -> list[FrameRow]:
         cur = self.conn.execute(
             "SELECT * FROM camera_frames WHERE captured_at_utc < ? AND (keep IS NULL OR keep = 0) "
