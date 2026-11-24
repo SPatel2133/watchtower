@@ -129,7 +129,8 @@ python -m watchtower hotspots && python -m watchtower export   # from the repo r
 The page re-fetches both files every 5 minutes, so a running `watch` keeps it current. Until a first export exists it
 shows `public/data/sample/` (synthetic, times shifted to look current) and says "sample data" in the status line.
 `?lat=..&lon=..` centres the first view (default: Canada); clicking a hotspot flies to it. Production build:
-`npm run build` (output in `web/globe/dist/`, static files only).
+`npm run build` (output in `web/globe/dist/`, static files only). Vite copies `public/data/` into `dist/` at build
+time, so when serving `dist/`, point the export there instead: `WATCHTOWER_GLOBE_DATA_DIR=web/globe/dist/data`.
 
 The globe code is adapted from [dev-Armaan/satellites](https://github.com/dev-Armaan/satellites) (MIT); the shaders
 and their constants are copied unchanged. Licences and attribution: [web/globe/CREDITS.md](web/globe/CREDITS.md).
