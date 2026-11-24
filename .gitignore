@@ -1,5 +1,5 @@
 .env
-data/
+/data/
 frames/
 __pycache__/
 *.pyc

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# written by `python -m watchtower export`; the sample/ files are committed
+public/data/*.geojson
+public/data/*.part
