@@ -110,7 +110,8 @@ def cmd_watch(settings: Settings, args: argparse.Namespace) -> int:
                     build_map(db, settings, cameras)
                 except Exception:
                     log.exception("map generation failed")
-            stop.wait(max(0.0, min(next_cam, next_hot) - time.monotonic()))
+            wake = min(next_cam, next_hot, deadline) if deadline is not None else min(next_cam, next_hot)
+            stop.wait(max(0.0, wake - time.monotonic()))
     log.info("watch stopped")
     return 0
 
