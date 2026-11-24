@@ -13,9 +13,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import requests
+import urllib3
 from PIL import Image, UnidentifiedImageError
 
 from watchtower.config import CameraConfig, Settings
@@ -25,6 +26,7 @@ log = logging.getLogger(__name__)
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
+MAX_REDIRECTS = 3
 
 
 class CameraFetchError(Exception):
@@ -51,17 +53,26 @@ class HttpStillSource:
         self.timeout = timeout
 
     def fetch(self, camera: CameraConfig) -> Frame:
-        try:
-            resp = self.session.get(camera.image_url, timeout=self.timeout, stream=True)
-        except requests.RequestException as exc:
-            raise CameraFetchError(f"{type(exc).__name__}: {exc}") from None
-        with resp:
-            if resp.status_code != 200:
-                raise CameraFetchError(f"HTTP {resp.status_code}")
-            content = resp.raw.read(MAX_IMAGE_BYTES + 1, decode_content=True)
-        if len(content) > MAX_IMAGE_BYTES:
-            raise CameraFetchError("image larger than 20 MB")
-        return Frame(content, resp.headers.get("Content-Type", ""))
+        url = camera.image_url
+        for _ in range(MAX_REDIRECTS + 1):
+            try:
+                resp = self.session.get(url, timeout=self.timeout, stream=True, allow_redirects=False)
+            except requests.RequestException as exc:
+                raise CameraFetchError(f"{type(exc).__name__}: {exc}") from None
+            with resp:
+                if resp.is_redirect:
+                    url = urljoin(url, resp.headers["Location"])
+                    continue
+                if resp.status_code != 200:
+                    raise CameraFetchError(f"HTTP {resp.status_code}")
+                try:
+                    content = resp.raw.read(MAX_IMAGE_BYTES + 1, decode_content=True)
+                except (urllib3.exceptions.HTTPError, requests.RequestException, OSError) as exc:
+                    raise CameraFetchError(f"read failed: {type(exc).__name__}: {exc}") from None
+            if len(content) > MAX_IMAGE_BYTES:
+                raise CameraFetchError("image larger than 20 MB")
+            return Frame(content, resp.headers.get("Content-Type", ""))
+        raise CameraFetchError(f"more than {MAX_REDIRECTS} redirects")
 
 
 class LocalFileSource:
