@@ -168,3 +168,5 @@ def setup_logging(level: str = "INFO") -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S%z",
     )
+    # urllib3 debug logs include full request URLs, and FIRMS URLs embed the MAP_KEY.
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
