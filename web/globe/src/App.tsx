@@ -83,7 +83,7 @@ export function App() {
       </Canvas>
       {tip && (
         <div
-          className={hovered!.x > window.innerWidth - 280 ? 'tooltip tooltip-left' : 'tooltip'}
+          className={hovered!.x > Math.max(window.innerWidth - 280, window.innerWidth / 2) ? 'tooltip tooltip-left' : 'tooltip'}
           style={{ left: hovered!.x, top: Math.min(Math.max(hovered!.y, 48), window.innerHeight - 48) }}
           role="tooltip"
         >
