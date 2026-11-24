@@ -6,7 +6,6 @@ import hashlib
 import io
 import logging
 import os
-import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -154,7 +153,6 @@ class CameraIngestor:
     now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
     _sources: dict[str, CameraSource] = field(default_factory=dict)
     _last_attempt: dict[str, float] = field(default_factory=dict)
-    _lock: threading.Lock = field(default_factory=threading.Lock)
 
     def source_for(self, camera: CameraConfig) -> CameraSource:
         if camera.source_type not in self._sources:
@@ -207,15 +205,18 @@ class CameraIngestor:
         stamp = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         cam_dir = self.settings.frames_dir / camera.id
         cam_dir.mkdir(parents=True, exist_ok=True)
-        with self._lock:
-            target = cam_dir / f"{stamp}.jpg"
-            n = 1
-            while target.exists():
+        target = cam_dir / f"{stamp}.jpg"
+        n = 1
+        while True:
+            try:
+                target.open("xb").close()  # reserve the name atomically, even across processes
+                break
+            except FileExistsError:
                 target = cam_dir / f"{stamp}_{n}.jpg"
                 n += 1
-            tmp = target.with_suffix(".jpg.part")
-            tmp.write_bytes(jpeg)
-            os.replace(tmp, target)
+        tmp = target.with_suffix(".jpg.part")
+        tmp.write_bytes(jpeg)
+        os.replace(tmp, target)
         rel = target.relative_to(self.settings.data_dir).as_posix()
         try:
             self.db.insert_frame(camera.id, _iso(now), rel, digest, len(jpeg))
