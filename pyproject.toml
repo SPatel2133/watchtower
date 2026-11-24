@@ -1,0 +1,8 @@
+[project]
+name = "watchtower"
+version = "0.1.0"
+description = "Early wildfire detection - Phase 1 data ingestion"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
