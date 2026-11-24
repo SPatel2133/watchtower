@@ -1,0 +1,87 @@
+{
+ "type": "FeatureCollection",
+ "generated_at": "2026-11-24T04:00:00Z",
+ "sample": true,
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -116.865,
+     33.3563
+    ]
+   },
+   "properties": {
+    "id": "palomarobs-cam01",
+    "name": "Palomar Observatory",
+    "source_network": "ALERTCalifornia",
+    "status": "ok"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -118.057,
+     34.2242
+    ]
+   },
+   "properties": {
+    "id": "mtwilson-cam01",
+    "name": "Mt Wilson",
+    "source_network": "ALERTCalifornia",
+    "status": "ok"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -117.5337,
+     33.7109
+    ]
+   },
+   "properties": {
+    "id": "santiagoeast-cam01",
+    "name": "Santiago Peak East",
+    "source_network": "ALERTCalifornia",
+    "status": "stale"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -122.324,
+     40.864
+    ]
+   },
+   "properties": {
+    "id": "grizzlypeakshasta-cam01",
+    "name": "Grizzly Peak (Shasta)",
+    "source_network": "ALERTCalifornia",
+    "status": "ok"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -121.9142,
+     37.8816
+    ]
+   },
+   "properties": {
+    "id": "mtdiablonorth-cam01",
+    "name": "Mt Diablo North",
+    "source_network": "ALERTCalifornia",
+    "status": "failing"
+   }
+  }
+ ]
+}

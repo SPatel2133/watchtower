@@ -26,8 +26,9 @@ Request a free key at <https://firms.modaps.eosdis.nasa.gov/api/map_key/>. It ar
 | `python -m watchtower hotspots [--days N]` | Pulls FIRMS hotspots (`VIIRS_SNPP_NRT`, `VIIRS_NOAA20_NRT`, `VIIRS_NOAA21_NRT`, `MODIS_NRT`) for the bounding box. N is 1-5, default 1. Duplicates are ignored. |
 | `python -m watchtower cameras` | Fetches one frame from every enabled camera, then updates camera health. |
 | `python -m watchtower map [--hours H]` | Writes `data/map.html`, a standalone Leaflet map. It shows hotspots from the last H hours (default 24), colored by confidence, and cameras colored by health. |
+| `python -m watchtower export [--hours H]` | Writes `web/globe/public/data/hotspots.geojson` (hotspots from the last H hours, default 24: source, satellite, acquisition time UTC, confidence label, FRP) and `cameras.geojson` (cameras with health status) for the [Global View](#global-view). Set `WATCHTOWER_GLOBE_DATA_DIR` to write elsewhere. |
 | `python -m watchtower prune` | Applies frame retention once. |
-| `python -m watchtower watch` | Runs continuously. Cameras run every 60 s, followed by frame retention. Hotspots run every 10 min, followed by a map rebuild. Options: `--camera-interval`, `--hotspot-interval`, `--days`, `--duration`. A failing camera or a FIRMS outage is logged, and the loop keeps running. |
+| `python -m watchtower watch` | Runs continuously. Cameras run every 60 s, followed by frame retention. Hotspots run every 10 min, followed by a map rebuild and a Global View export. Options: `--camera-interval`, `--hotspot-interval`, `--days`, `--duration`. A failing camera or a FIRMS outage is logged, and the loop keeps running. |
 
 All commands take `--log-level DEBUG|INFO|WARNING`.
 
@@ -113,6 +114,43 @@ Rule: a source is used only if its terms explicitly allow automated or scheduled
 | **HPWREN** (UC San Diego) | Automated or scheduled retrieval of real-time images requires a licence from UC San Diego. | n/a | **No.** It needs a licence, which has been requested separately. |
 
 All configured cameras are in California because ALERTCalifornia was the only source that passed the rule. Canadian coverage depends on getting an Ontario 511 key, or on a licence from DriveBC or Alberta.
+
+## Global View
+
+`web/globe/` is a standalone Vite + React + three.js page: a full-screen photoreal globe with the real day/night
+cycle, the last 24 h of hotspots and the camera locations. It's the overview and demo page; `data/map.html` stays the
+detailed operational map.
+
+```bash
+cd web/globe && npm install && npm run dev          # opens with bundled sample data
+python -m watchtower hotspots && python -m watchtower export   # from the repo root; refresh the page for real data
+```
+
+The page re-fetches both files every 5 minutes, so a running `watch` keeps it current. Until a first export exists it
+shows `public/data/sample/` (synthetic, times shifted to look current) and says "sample data" in the status line.
+`?lat=..&lon=..` centres the first view (default: Canada); clicking a hotspot flies to it. Production build:
+`npm run build` (output in `web/globe/dist/`, static files only). Vite copies `public/data/` into `dist/` at build
+time, so when serving `dist/`, point the export there instead: `WATCHTOWER_GLOBE_DATA_DIR=web/globe/dist/data`.
+
+The globe code is adapted from [dev-Armaan/satellites](https://github.com/dev-Armaan/satellites) (MIT); the shaders
+and their constants are copied unchanged. Licences and attribution: [web/globe/CREDITS.md](web/globe/CREDITS.md).
+
+| Effect | Files (under `web/globe/src/`) |
+|---|---|
+| Sun position and GMST from UTC, every frame; cloud drift | `globe/SunClock.tsx`, `lib/geo.ts`, `lib/geoCore.ts` |
+| Day side (12% desaturation, low-sun tint, glint, haze, hill shading), terminator, night ground, earthshine, city lights | `globe/shaders/earth.ts` (shared GLSL in `globe/shaders/chunks.ts`), wired in `globe/Earth.tsx` |
+| Clouds (1.006 R, ground shadows) | `globe/shaders/clouds.ts`, `globe/Earth.tsx` |
+| Atmosphere rim | `globe/shaders/atmosphere.ts`, `globe/Earth.tsx` |
+| Stars (Hipparcos, magnitude classes, rotate with GMST) | `globe/Stars.tsx`, `globe/starData.ts`, `globe/shaders/points.ts` |
+| HDR buffer, bloom, tone shoulder, grain, vignette | `globe/Post.tsx`, `globe/toneShoulder.ts` |
+| 1k → 4k textures, decoded in a Web Worker | `globe/textures.ts`, `globe/textureDecode.worker.ts`, `public/textures/` |
+| Camera: damped orbit, zoom limits, auto-rotate, fly-to | `globe/CameraRig.tsx` |
+| **Hotspots** (FRP → size/brightness, confidence → opacity, < 3 h pulse) and **camera markers** | `globe/shaders/hotspots.ts`, `globe/Markers.tsx` (also picking for the tooltip and click) |
+| Data loading, 5-minute refresh, sample fallback | `data/data.ts` |
+| Tooltip, status line, credits, `?lat/lon`, reduced motion | `App.tsx`, `styles.css` |
+
+`prefers-reduced-motion` stops cloud drift, hotspot pulsing and auto-rotation, and makes fly-to a cut. Device pixel
+ratio is capped at 2.
 
 ## Development
 

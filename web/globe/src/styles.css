@@ -1,0 +1,57 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #07080a;
+  color: #ece8e0;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+.globe {
+  position: fixed !important;
+  inset: 0;
+  touch-action: none;
+}
+.status {
+  position: fixed;
+  left: 16px;
+  bottom: 14px;
+  opacity: 0.78;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+.credits {
+  position: fixed;
+  right: 16px;
+  bottom: 14px;
+  max-width: 52ch;
+  text-align: right;
+  font-size: 10px;
+  opacity: 0.42;
+}
+.credits a {
+  color: inherit;
+}
+.tooltip {
+  position: fixed;
+  transform: translate(14px, -50%);
+  padding: 6px 9px;
+  background: rgba(12, 14, 17, 0.88);
+  border: 1px solid rgba(236, 232, 224, 0.18);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.tooltip-left {
+  transform: translate(calc(-100% - 14px), -50%);
+}
+.tooltip-title {
+  color: #ff8a5c;
+}
+@media (max-width: 640px) {
+  .credits {
+    left: 16px;
+    bottom: 34px;
+    text-align: left;
+  }
+}

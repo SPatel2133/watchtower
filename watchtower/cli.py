@@ -1,4 +1,4 @@
-"""Command line: init, hotspots, cameras, map, prune, watch."""
+"""Command line: init, hotspots, cameras, map, export, prune, watch."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from collections import Counter
 from watchtower.cameras import CameraIngestor
 from watchtower.config import CameraConfig, ConfigError, Settings, load_cameras, load_settings, setup_logging
 from watchtower.db import open_db
+from watchtower.export import export_globe_data
 from watchtower.firms import fetch_hotspots
 from watchtower.http import make_session
 from watchtower.map import build_map
@@ -58,6 +59,13 @@ def cmd_map(settings: Settings, args: argparse.Namespace) -> int:
     with open_db(settings.db_path) as db:
         path = build_map(db, settings, _cameras(settings), hours=args.hours)
     log.info("map written to %s", path.resolve())
+    return 0
+
+
+def cmd_export(settings: Settings, args: argparse.Namespace) -> int:
+    with open_db(settings.db_path) as db:
+        n_hot, n_cam = export_globe_data(db, settings, _cameras(settings), hours=args.hours)
+    log.info("export: %d hotspots, %d cameras written to %s", n_hot, n_cam, settings.globe_data_dir.resolve())
     return 0
 
 
@@ -110,6 +118,10 @@ def cmd_watch(settings: Settings, args: argparse.Namespace) -> int:
                     build_map(db, settings, cameras)
                 except Exception:
                     log.exception("map generation failed")
+                try:
+                    export_globe_data(db, settings, cameras)
+                except Exception:
+                    log.exception("globe export failed")
             wake = min(next_cam, next_hot, deadline) if deadline is not None else min(next_cam, next_hot)
             stop.wait(max(0.0, wake - time.monotonic()))
     log.info("watch stopped")
@@ -128,6 +140,9 @@ def build_parser() -> argparse.ArgumentParser:
     m = sub.add_parser("map", help="write data/map.html")
     m.add_argument("--hours", type=int, default=24, help="hotspot window in hours (default 24)")
     m.set_defaults(func=cmd_map)
+    e = sub.add_parser("export", help="write hotspots/cameras GeoJSON for the Global View (web/globe)")
+    e.add_argument("--hours", type=int, default=24, help="hotspot window in hours (default 24)")
+    e.set_defaults(func=cmd_export)
     sub.add_parser("prune", help="apply FRAME_RETENTION_HOURS once").set_defaults(func=cmd_prune)
     w = sub.add_parser("watch", help="run cameras, hotspots, map and retention on a schedule")
     w.add_argument("--camera-interval", type=float, default=60, help="seconds (default 60)")

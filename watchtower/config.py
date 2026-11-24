@@ -59,6 +59,7 @@ class Settings:
     failing_after: int
     http_timeout: float
     http_retries: int
+    globe_data_dir: Path = Path("web/globe/public/data")
 
     @property
     def db_path(self) -> Path:
@@ -116,6 +117,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         failing_after=_env_number(env, "CAMERA_FAILING_AFTER", 3, int),
         http_timeout=_env_number(env, "HTTP_TIMEOUT_SECONDS", 20),
         http_retries=_env_number(env, "HTTP_RETRIES", 3, int),
+        globe_data_dir=Path(env.get("WATCHTOWER_GLOBE_DATA_DIR", "web/globe/public/data")),
     )
 
 
