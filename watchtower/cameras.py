@@ -59,8 +59,9 @@ class HttpStillSource:
             except requests.RequestException as exc:
                 raise CameraFetchError(f"{type(exc).__name__}: {exc}") from None
             with resp:
-                if resp.is_redirect:
-                    url = urljoin(url, resp.headers["Location"])
+                location = self.session.get_redirect_target(resp)
+                if location:
+                    url = urljoin(url, location)
                     continue
                 if resp.status_code != 200:
                     raise CameraFetchError(f"HTTP {resp.status_code}")
