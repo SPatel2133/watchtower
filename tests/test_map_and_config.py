@@ -85,3 +85,14 @@ def test_map_contains_recent_hotspots_and_camera_health(tmp_path, db, settings):
     assert data["cameras"][0]["status"] == "stale"
     old = build_map(db, settings, cams, hours=24, now=datetime(2026, 11, 25, tzinfo=timezone.utc)).read_text()
     assert '"hotspots":[]' in old
+
+
+def test_map_links_latest_camera_frame(tmp_path, db, settings):
+    path = tmp_path / "c.yaml"
+    path.write_text(CAMS_YAML)
+    db.insert_frame("cam-a", "2026-11-24T01:00:00Z", "frames/cam-a/old.jpg", "h1", 1)
+    db.insert_frame("cam-a", "2026-11-24T02:00:00Z", "frames/cam-a/new.jpg", "h2", 1)
+    html = build_map(db, settings, load_cameras(path), now=datetime(2026, 11, 24, 3, tzinfo=timezone.utc)).read_text()
+    data = json.loads(re.search(r"const DATA = (.*);\n", html).group(1).replace("<\\/", "</"))
+    assert data["cameras"][0]["latest_frame"] == "frames/cam-a/new.jpg"
+    assert data["cameras"][0]["latest_frame_at"] == "2026-11-24T02:00:00Z"
