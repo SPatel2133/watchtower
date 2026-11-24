@@ -1,0 +1,66 @@
+# Watchtower camera list. Only sources whose terms explicitly allow automated fetching,
+# or that are open data with a clear licence, belong here (see README "Camera sources").
+#
+# Fields: id, name, image_url, lat, lon, source_network (required)
+#         bearing_deg, source_type (http|file), enabled, min_interval_seconds, license, attribution (optional)
+#
+# ALERTCalifornia: free public use with credit "ALERTCalifornia | UC San Diego"; do not crop or remove the
+# black information bar or partner logos. Non-commercial (CC BY-NC-ND 4.0). These are PTZ cameras, so
+# bearing_deg is the azimuth reported when the camera was added and may drift.
+cameras:
+  - id: palomarobs-cam01
+    name: Palomar Observatory North
+    image_url: https://cameras.alertcalifornia.org/public-camera-data/palomarobs-cam01/latest-frame.jpg
+    lat: 33.3582
+    lon: -116.862
+    bearing_deg: 122.58
+    source_network: ALERTCalifornia
+    license: CC BY-NC-ND 4.0
+    attribution: ALERTCalifornia | UC San Diego
+  - id: mtwilson-cam01
+    name: Mt. Wilson East
+    image_url: https://cameras.alertcalifornia.org/public-camera-data/mtwilson-cam01/latest-frame.jpg
+    lat: 34.22451
+    lon: -118.05867
+    bearing_deg: 106.73
+    source_network: ALERTCalifornia
+    license: CC BY-NC-ND 4.0
+    attribution: ALERTCalifornia | UC San Diego
+  - id: santiagoeast-cam01
+    name: Santiago Peak 1
+    image_url: https://cameras.alertcalifornia.org/public-camera-data/santiagoeast-cam01/latest-frame.jpg
+    lat: 33.711536
+    lon: -117.533112
+    bearing_deg: 64.83
+    source_network: ALERTCalifornia
+    license: CC BY-NC-ND 4.0
+    attribution: ALERTCalifornia | UC San Diego
+  - id: grizzlypeakshasta-cam01
+    name: Grizzly Peak Lookout (Shasta) 1
+    image_url: https://cameras.alertcalifornia.org/public-camera-data/grizzlypeakshasta-cam01/latest-frame.jpg
+    lat: 41.144399
+    lon: -121.978699
+    bearing_deg: 342.88
+    source_network: ALERTCalifornia
+    license: CC BY-NC-ND 4.0
+    attribution: ALERTCalifornia | UC San Diego
+  - id: mtdiablonorth-cam01
+    name: Mt. Diablo North
+    image_url: https://cameras.alertcalifornia.org/public-camera-data/mtdiablonorth-cam01/latest-frame.jpg
+    lat: 37.892639
+    lon: -121.899223
+    bearing_deg: 114.4
+    source_network: ALERTCalifornia
+    license: CC BY-NC-ND 4.0
+    attribution: ALERTCalifornia | UC San Diego
+
+  # Local demo camera: cycles through the sample images in tests/fixtures/images. Enable to try the
+  # pipeline offline (path is relative to the repo root only if you run from it; use an absolute path otherwise).
+  - id: local-sample
+    name: Local sample images
+    image_url: file:tests/fixtures/images
+    lat: 49.2827
+    lon: -123.1207
+    source_network: local
+    source_type: file
+    enabled: false
