@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -43,6 +44,7 @@ class ImageServer:
     def __init__(self) -> None:
         self.routes: dict[str, tuple[int, str, bytes]] = {}
         self.user_agents: list[str] = []
+        self.body_delay: dict[str, float] = {}
         server = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -52,7 +54,12 @@ class ImageServer:
                 self.send_response(status)
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(body)))
+                if status in (301, 302, 307):
+                    self.send_header("Location", body.decode())
                 self.end_headers()
+                if self.path in server.body_delay:
+                    self.wfile.flush()
+                    time.sleep(server.body_delay[self.path])
                 self.wfile.write(body)
 
             def log_message(self, *args: object) -> None:

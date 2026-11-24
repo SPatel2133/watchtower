@@ -84,3 +84,20 @@ def test_retention_disabled_with_zero(db, settings):
     _, path = make_frame(db, settings, "old", 1000)
     assert prune_frames(db, settings.data_dir, 0, now=NOW).deleted_rows == 0
     assert path.exists()
+
+
+def test_retention_continues_past_undeletable_batch(db, settings, monkeypatch):
+    for i in range(3):
+        make_frame(db, settings, f"stuck{i}", 200)
+    _, deletable = make_frame(db, settings, "ok", 100)
+    real_unlink = type(deletable).unlink
+
+    def failing_unlink(self, *a, **kw):
+        if self.name.startswith("stuck"):
+            raise PermissionError("busy")
+        return real_unlink(self, *a, **kw)
+
+    monkeypatch.setattr(type(deletable), "unlink", failing_unlink)
+    result = prune_frames(db, settings.data_dir, 72, now=NOW, batch=2)
+    assert (result.deleted_rows, result.errors) == (1, 3)
+    assert not deletable.exists()

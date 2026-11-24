@@ -139,3 +139,8 @@ def test_fetch_hotspots_dedups_and_survives_failing_source(settings, db):
     assert second.fetched == 12
     assert second.inserted == 0
     assert db.count_hotspots() == 12
+
+
+def test_short_row_is_skipped_not_fatal():
+    text = (FIXTURES / "firms_modis.csv").read_text() + "43.1,-124.0,306.7,2,1.38,2026-11-20\n"
+    assert len(parse_csv(text, "MODIS_NRT", FETCHED)) == 6

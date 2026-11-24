@@ -147,3 +147,35 @@ def test_unknown_source_type_is_a_failure(ingestor, db):
 def test_to_jpeg_rejects_missing_content_type():
     with pytest.raises(CameraFetchError):
         to_jpeg(Frame((IMAGES / "frame0.jpg").read_bytes(), ""))
+
+
+def test_redirect_is_followed(ingestor, image_server):
+    image_server.serve_image("/real.jpg", "frame0.jpg")
+    image_server.routes["/cam.jpg"] = (302, "text/plain", b"/real.jpg")
+    assert ingestor.process(camera(image_server.url("/cam.jpg"))).outcome == "saved"
+
+
+def test_redirect_loop_is_a_failure(ingestor, image_server, db):
+    image_server.routes["/loop.jpg"] = (302, "text/plain", b"/loop.jpg")
+    assert ingestor.process(camera(image_server.url("/loop.jpg"))).outcome == "failed"
+    assert "redirects" in db.get_health("cam1").last_error
+
+
+def test_body_read_timeout_counts_as_failure(db, settings, session, image_server):
+    from dataclasses import replace
+
+    image_server.serve_image("/slow.jpg", "frame0.jpg")
+    image_server.body_delay["/slow.jpg"] = 1.5
+    ing = CameraIngestor(db, replace(settings, http_timeout=0.3), session, now=Clock())
+    assert ing.process(camera(image_server.url("/slow.jpg"))).outcome == "failed"
+    assert db.get_health("cam1").consecutive_failures == 1
+
+
+def test_existing_file_at_frame_path_is_not_overwritten(ingestor, image_server, db, settings):
+    taken = settings.frames_dir / "cam1" / "20261124T040100Z.jpg"
+    taken.parent.mkdir(parents=True)
+    taken.write_bytes(b"other process")
+    image_server.serve_image("/cam.jpg", "frame0.jpg")
+    assert ingestor.process(camera(image_server.url("/cam.jpg"))).outcome == "saved"
+    assert taken.read_bytes() == b"other process"
+    assert db.frames("cam1")[0].path == "frames/cam1/20261124T040100Z_1.jpg"
