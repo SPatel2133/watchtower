@@ -55,8 +55,6 @@ def prune_frames(
                 continue
             deletable.append(row.id)
         result.deleted_rows += db.delete_frames(deletable)
-        if not deletable:
-            break
     if result.deleted_rows or result.errors:
         log.info(
             "retention: removed %d frames older than %s (%d files already missing, %d errors)",
