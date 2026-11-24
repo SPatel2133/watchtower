@@ -179,3 +179,15 @@ def test_existing_file_at_frame_path_is_not_overwritten(ingestor, image_server, 
     assert ingestor.process(camera(image_server.url("/cam.jpg"))).outcome == "saved"
     assert taken.read_bytes() == b"other process"
     assert db.frames("cam1")[0].path == "frames/cam1/20261124T040100Z_1.jpg"
+
+
+def test_failed_frame_write_leaves_no_placeholder(ingestor, image_server, settings, monkeypatch):
+    import watchtower.cameras as cameras_mod
+
+    def broken_replace(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(cameras_mod.os, "replace", broken_replace)
+    image_server.serve_image("/cam.jpg", "frame0.jpg")
+    assert [r.outcome for r in ingestor.run([camera(image_server.url("/cam.jpg"))])] == ["failed"]
+    assert list((settings.frames_dir / "cam1").iterdir()) == []

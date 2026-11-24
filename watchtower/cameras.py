@@ -216,8 +216,13 @@ class CameraIngestor:
                 target = cam_dir / f"{stamp}_{n}.jpg"
                 n += 1
         tmp = target.with_suffix(".jpg.part")
-        tmp.write_bytes(jpeg)
-        os.replace(tmp, target)
+        try:
+            tmp.write_bytes(jpeg)
+            os.replace(tmp, target)
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            target.unlink(missing_ok=True)
+            raise
         rel = target.relative_to(self.settings.data_dir).as_posix()
         try:
             self.db.insert_frame(camera.id, _iso(now), rel, digest, len(jpeg))
