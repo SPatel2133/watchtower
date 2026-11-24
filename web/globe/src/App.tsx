@@ -82,7 +82,11 @@ export function App() {
         <CameraRig ref={rig} />
       </Canvas>
       {tip && (
-        <div className="tooltip" style={{ left: hovered!.x, top: hovered!.y }} role="tooltip">
+        <div
+          className={hovered!.x > window.innerWidth - 280 ? 'tooltip tooltip-left' : 'tooltip'}
+          style={{ left: hovered!.x, top: Math.min(Math.max(hovered!.y, 48), window.innerHeight - 48) }}
+          role="tooltip"
+        >
           {tip.map((line, i) => (
             <div key={i} className={i === 0 ? 'tooltip-title' : undefined}>
               {line}

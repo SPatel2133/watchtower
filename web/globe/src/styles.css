@@ -42,6 +42,9 @@ body,
   pointer-events: none;
   white-space: nowrap;
 }
+.tooltip-left {
+  transform: translate(calc(-100% - 14px), -50%);
+}
 .tooltip-title {
   color: #ff8a5c;
 }
