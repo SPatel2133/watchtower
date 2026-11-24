@@ -120,7 +120,7 @@ def parse_csv(text: str, source: str, fetched_at: str) -> list[Hotspot]:
                     fetched_at=fetched_at,
                 )
             )
-        except (KeyError, ValueError, TypeError) as exc:
+        except (KeyError, ValueError, TypeError, AttributeError) as exc:
             log.warning("FIRMS %s: skipping malformed row %d: %s", source, line_no, exc)
     return hotspots
 
